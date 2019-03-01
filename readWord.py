@@ -22,22 +22,26 @@ allKey = [
 '''
         
 #替换关键字
-def fill_docx(allKey, filename):
+def fill_file(allKey, filename):
+    if filename.find(".docx") > -1:
+        filepath = os.getcwd() + '\\temple\\' + filename
+        doc = docx.Document(filepath)
+        for para in doc.paragraphs:
+            #runs = copy.deepcopy(para.runs)
+            for run in para.runs:
 
-    doc = docx.Document(os.getcwd() + '\\temple\\' + filename)
-    for para in doc.paragraphs:
-        runs = copy.deepcopy(para.runs)
-        para.clear()
-        for run in runs:
-
-            #进行替换关键字
-            for dic in allKey:
-
-                if run.text.find(dic.key)
-                run.text = run.text.replace(dic.key, dic.value)
-
-            para.add_run(run.text, run.style)
-    doc.save(os.getcwd() + '\\new\\' + filename)
+                #进行替换关键字
+                for dic in allKey:
+                    if run.text.find(dic['key']) > -1:
+                        run.text = run.text.replace(dic['key'], dic['value'])
+                        #para.clear()
+                        #para.add_run(run.text, run.style)
+        newfilepath = os.getcwd() + '\\new\\' + filename.replace('docx', 'doc')
+        doc.save(newfilepath)
+    elif filename.find('.xls') > -1:
+        print('是个表')
+    else:
+        print('不知道是个啥')
 
 #获取关键字
 def read_excel():
@@ -55,12 +59,12 @@ def read_excel():
     for row in range(sheet1.nrows):
         for col in range(sheet1.ncols):
             cellText = sheet1.cell_value(row, col)
-            if cellText.find('$$'):
+            if cellText.find('$$') > -1:
                 #找到变量后,存为字典
                 currentDic = {}
-                currentDic.key = cellText[2:]
-                currentDic.row = row
-                currentDic.col = col
+                currentDic['key'] = cellText[2:]
+                currentDic['row'] = row
+                currentDic['col'] = col
 
                 allKey.append(currentDic)
     return allKey
@@ -72,24 +76,34 @@ def read_newCustomerExcel(allKey):
     sheet1 = workbook.sheets()[0]
 
     #遍历所有的dic
-    for dic in allKey
+    for dic in allKey:
         #获取新客户信息
-        dic.value = sheet1.cell_value(dic[ow], dic[col])
+        ctype = sheet1.cell(dic['row'], dic['col']).ctype 
+        if ctype == 2 and ctype % 1 == 0.0:  # ctype为2且为浮点
+            dic['value'] = str(int(sheet1.cell_value(dic['row'], dic['col'])))
+        else :
+            dic['value'] = str(sheet1.cell_value(dic['row'], dic['col']))
     return allKey
+
+#获取模板列表
+def templeFiles():
+    return os.listdir(os.getcwd() + '\\temple')
 
 #进行替换
 def autoFill():
     
     allKey = read_excel()
-
     #1.根据关键字获取新客户的信息
     allKey = read_newCustomerExcel(allKey)
     
     #2.将获取到的客户信息,自动填充到各模板并生成新的文件
-    fill_docx(allKey, '01封皮目录.doc')
+    for file in templeFiles():
+        fill_file(allKey, file)
 
-
+    
+                  
 if __name__ == "__main__":
-    autoFill();
+    #print(templeFiles())
+    autoFill()
     #read_docx('你好你好.docx');
 #read_docx("C:\\Users\\Administrator\\Desktop\\python_word\\你好你好.docx")
